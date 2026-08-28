@@ -1,0 +1,38 @@
+data_dir = "./evaluation/ragas/data"
+default_quota = 150
+submission_interval = 10
+[judge]
+enabled = true
+max_workers = 256
+correct_threshold = 0.6
+max_retries = 3
+max_execution_time = 60
+report_metric = "score"
+[langsmith]
+enabled = false
+api_key = ""
+project_name = ""
+endpoint = "https://api.smith.langchain.com"
+
+[models]
+llm_type = "openai"
+openai_api_base = "http://localhost:8000/v1"
+openai_api_key = "EMPTY"
+llm_model = "Qwen/Qwen2.5-72B-Instruct-GPTQ-Int4"
+temperature = 0.0
+
+[embedding]
+emb_type = "huggingface"
+embeddings_model = "BAAI/bge-small-en-v1.5"
+
+[cms]
+enabled = false
+interval = 10
+contest_id = ""
+username = ""
+password = ""
+
+[eval]
+mtype = "rl"
+#mtype = "sft"
+concurrent_requests = 800

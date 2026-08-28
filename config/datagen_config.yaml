@@ -1,0 +1,79 @@
+local_llm_path: "qwen2.5_32b"
+num_gpus: 8
+gpu_per_model: 1
+data_output_dir: "data"
+encoding_method: "no"
+num_data: 320000
+tsevol_ratio: 0.15
+max_token_length: 8192
+tokenizer_path: "ickpt"
+ctx_length: 8192
+disable_metric_config: false
+local_change_verbose: true
+enable_drop_prompt: true
+enable_multiple_trend: true
+dryrun: false
+mode_weights:
+  uts: 0.30
+  mts_local: 0.35
+  mts_shape: 0.35
+qa_type_weights:
+  # Sum must equal 1.0. Validation at startup aborts if any qa_type the
+  # codebase emits is missing a weight here (no silent drops).
+  #
+  # Tuned to hit the 100K SFT / 50K RL target at num_data=320K:
+  #   probe at 160K yielded 50K SFT + 24K RL (2.05:1 ratio ✓); 2× num_data
+  #   yields ~100K SFT + ~50K RL. ~50% filter/balance loss is built in.
+  # train_rl is exclusively rl_* non-bridge samples (see `_is_force_sft`
+  # in dataset.py); every other qa_type is force-SFT.
+  #
+  # ---- Foundational single-metric ----
+  description: 0.05
+  yes_no: 0.05
+  # ---- Multi-metric pattern recognition ----
+  correlation: 0.05
+  anticorrelation: 0.05
+  clustering: 0.04
+  anticlustering: 0.04
+  # ---- Legacy segment-based umbrella (judgment/stat/enumeration, ~15 sub-types) ----
+  segment_mask: 0.15
+  # ---- Taxonomy (split from the old `taxonomy: 0.40` lump) ----
+  sft_atomic: 0.17          # atomic_* (primitives — main TS encoder aligner)
+  sft_bridge: 0.07          # bridge=True samples (decomposition meta-skill, force-SFT)
+  rl_composition: 0.33      # rl_* (compositional reasoning — primary RL training signal)
+eval_type_weights:
+  # Boost rare families within segment_mask umbrella.
+  # Unlisted eval_types default to weight 1.0.
+  transition_enumeration: 2.5
+  event_segment_enumeration: 2.5
+  duration_proportion: 2.5
+  temporal_position: 2.0
+  segment_enumeration: 1.5
+max_ood_samples: 8000        # ~260 samples/OOD-type, σ≈3.1% for paper-grade CIs
+
+# Length-extension curriculum (Option C, 2026-04-21)
+#
+# After the main pipeline finishes (main pool + split + TSEvol), generate
+# length-diverse samples to give RL and OOD eval broad sequence-length
+# coverage. Appended to train_rl + val; new files written for OOD test
+# buckets. Extensions run post-TSEvol — they are raw paraphrase of
+# original QA (no LLM invocation), keeping the reward-verifiable signal
+# clean. Disable by setting enabled: false.
+#
+# Distribution per bucket (uniform within each range):
+#   train_rl +48K  : seq_len ∈ [32, 768]   (rl_* only, non-bridge)
+#   val      +1.5K : seq_len ∈ [32, 768]   (all eval_types)
+#   test_len_near  : seq_len ∈ [257, 768]  (all eval_types) — RL-only envelope
+#   test_len_far   : seq_len ∈ [769, 1536] (all eval_types, max 8 channels)
+#   test_len_extreme: seq_len ∈ [1537, 4096] (all eval_types, max 8 channels)
+#
+# Main pool already contributes ~48K rl_* samples at 256, so the 50/50
+# split emerges: 48K (main, =256) + 48K (ext, uniform[32,768]) = 96K total.
+length_extension:
+  enabled: true
+  targets:
+    train_rl: 48000
+    val: 1500
+    test_len_near: 3000
+    test_len_far: 3000
+    test_len_extreme: 1500

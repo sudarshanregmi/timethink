@@ -1,0 +1,6 @@
+{
+  "auto_map": {
+    "AutoProcessor": "processing_qwen3_ts.Qwen3TSProcessor"
+  },
+  "processor_class": "Qwen3TSProcessor"
+}

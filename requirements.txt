@@ -1,0 +1,65 @@
+# TimeThink — Python dependencies
+#
+# Versions below are what we used (single node, 8x NVIDIA H200, CUDA 12.x).
+# `torch` and `vllm` are hardware/CUDA-specific — you may need to install the
+# build matching your platform rather than the exact pin here.
+#
+# This covers the data-generation, evaluation, and inference pipeline. The RL
+# TRAINING stack (verl, vendored under verl/) additionally needs a
+# Megatron-core / SGLang / flash-attn setup that is not pip-installable in a
+# portable way — use scripts/utils/install_vllm_sglang_mcore.sh for that.
+
+# --- Deep learning / models ---
+torch==2.8.0
+# vllm 0.11.0 requires transformers>=4.55.2; the Qwen3TS model needs >=4.54.
+# Capped <5: the model + custom code were validated on the 4.x line (tested on
+# 4.57.6); transformers 5.x is untested. huggingface-hub is left unpinned so
+# transformers pulls a compatible (<1.0) build.
+transformers>=4.55.2,<5
+accelerate>=1.0
+peft>=0.15
+safetensors>=0.6
+datasets>=3.0
+
+# --- Inference / RL rollout ---
+vllm==0.11.0
+
+# --- Data / numerics ---
+numpy==1.26.4
+pandas==2.3.3
+pyarrow==22.0.0
+scipy==1.15.3
+
+# --- Config / orchestration ---
+hydra-core==1.3.2
+omegaconf==2.3.0
+pydantic==2.12.5
+PyYAML==6.0.3
+packaging==25.0
+tomli==2.3.0 ; python_version < "3.11"
+
+# --- LLM-as-judge evaluation ---
+ragas==0.4.3
+langchain-core==1.2.18
+langchain-community==0.4.1
+langchain-openai==1.1.11
+json-repair==0.58.5
+
+# --- Utilities / logging / async ---
+loguru==0.7.3
+tqdm==4.67.1
+rich==14.2.0
+typer==0.21.0
+matplotlib==3.10.8
+filelock==3.20.1
+psutil==7.2.0
+aiohttp==3.13.2
+uvloop==0.22.1
+torchdata==0.11.0
+
+# --- Dev / test ---
+pytest==9.0.2
+
+# --- Optional (only if you use these paths) ---
+# llama-cpp-python      # the optional 'llama' inference engine in synth/utils/llm_utils.py
+# opentslm              # only to evaluate the OpenTSLM baseline
